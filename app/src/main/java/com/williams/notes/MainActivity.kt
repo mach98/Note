@@ -40,6 +40,8 @@ class MainActivity : AppCompatActivity() {
         binding.recyclerView.layoutManager = LinearLayoutManager(applicationContext)
         binding.recyclerView.itemAnimator = DefaultItemAnimator()
         binding.recyclerView.adapter = adapter
+        adapter.noteList = retrieveNotes()
+        adapter.notifyItemRangeInserted(0,adapter.noteList.size)
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {

@@ -5,7 +5,7 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_margin="20dp"
+        android:layout_margin="40dp"
         android:orientation="vertical">
         <EditText
             android:id="@+id/editTitle"
@@ -22,7 +22,11 @@
             android:inputType="textPersonName"
             android:hint="@string/contents"
             android:importantForAutofill="no"/>
-        <TableRow>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            >
             <Button
                 android:id="@+id/btnCancel"
                 android:layout_width="wrap_content"
@@ -36,6 +40,6 @@
                 android:layout_marginStart="30dp"
                 android:text="@string/ok"
                 style="?android:attr/buttonBarButtonStyle"/>
-        </TableRow>
+        </LinearLayout>
     </LinearLayout>
 </ScrollView>
