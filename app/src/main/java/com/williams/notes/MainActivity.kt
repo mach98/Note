@@ -1,20 +1,29 @@
 package com.williams.notes
 
+import android.content.Context
 import android.os.Bundle
-import com.google.android.material.snackbar.Snackbar
 import androidx.appcompat.app.AppCompatActivity
-import androidx.navigation.findNavController
-import androidx.navigation.ui.AppBarConfiguration
-import androidx.navigation.ui.navigateUp
-import androidx.navigation.ui.setupActionBarWithNavController
 import android.view.Menu
 import android.view.MenuItem
+import androidx.recyclerview.widget.DefaultItemAnimator
+import androidx.recyclerview.widget.LinearLayoutManager
+import com.google.gson.Gson
+import com.google.gson.GsonBuilder
+import com.google.gson.reflect.TypeToken
 import com.williams.notes.databinding.ActivityMainBinding
+import java.io.BufferedReader
+import java.io.InputStreamReader
+import java.io.OutputStreamWriter
+import java.io.Writer
 
 class MainActivity : AppCompatActivity() {
 
-    private lateinit var appBarConfiguration: AppBarConfiguration
     private lateinit var binding: ActivityMainBinding
+    private lateinit var adapter: NoteAdapter
+
+    companion object {
+        private const val FILEPATH = "notes.json"
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -24,14 +33,13 @@ class MainActivity : AppCompatActivity() {
 
         setSupportActionBar(binding.toolbar)
 
-        val navController = findNavController(R.id.nav_host_fragment_content_main)
-        appBarConfiguration = AppBarConfiguration(navController.graph)
-        setupActionBarWithNavController(navController, appBarConfiguration)
-
-        binding.fab.setOnClickListener { view ->
-            Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                .setAction("Action", null).show()
+        binding.fab.setOnClickListener {
+            NewNote().show(supportFragmentManager, "")
         }
+        adapter = NoteAdapter(this)
+        binding.recyclerView.layoutManager = LinearLayoutManager(applicationContext)
+        binding.recyclerView.itemAnimator = DefaultItemAnimator()
+        binding.recyclerView.adapter = adapter
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -49,10 +57,60 @@ class MainActivity : AppCompatActivity() {
             else -> super.onOptionsItemSelected(item)
         }
     }
+    
+    fun createNewNote(n: Note){
+        adapter.noteList.add(n)
+        adapter.notifyItemInserted(adapter.noteList.size -1)
+        saveNotes()
+    }
 
-    override fun onSupportNavigateUp(): Boolean {
-        val navController = findNavController(R.id.nav_host_fragment_content_main)
-        return navController.navigateUp(appBarConfiguration)
-                || super.onSupportNavigateUp()
+    fun deleteNote(index: Int){
+        adapter.noteList.removeAt(index)
+        adapter.notifyItemRemoved(index)
+        saveNotes()
+    }
+
+    fun showNote(index: Int){
+        val dialog = ShowNote(adapter.noteList[index], index)
+        dialog.show(supportFragmentManager, "")
+    }
+
+    private fun saveNotes(){
+        val notes = adapter.noteList
+        val gson = GsonBuilder().create()
+        val jsonNotes = gson.toJson(notes)
+
+        var writer: Writer? = null
+        try{
+            val out = this.openFileOutput(FILEPATH, Context.MODE_PRIVATE)
+            writer = OutputStreamWriter(out)
+            writer.write(jsonNotes)
+        } catch (e: Exception){
+            writer?.close()
+        }finally {
+            writer?.close()
+        }
+    }
+
+    private fun retrieveNotes():MutableList<Note>{
+        var noteList = mutableListOf<Note>()
+        if(this.getFileStreamPath(FILEPATH).isFile){
+            var reader:BufferedReader? = null
+            try{
+                val fileInput = this.openFileInput(FILEPATH)
+                reader = BufferedReader(InputStreamReader(fileInput))
+                val stringBuilder = StringBuilder()
+                for(line in reader.readLine()) stringBuilder.append(line)
+                if(stringBuilder.isNotEmpty()){
+                    val listType = object: TypeToken<List<Note>>(){}.type
+                    noteList = Gson().fromJson(stringBuilder.toString(), listType)
+                }
+            }catch(e:Exception){
+                reader?.close()
+            }finally {
+                reader?.close()
+            }
+        }
+        return noteList
     }
 }
